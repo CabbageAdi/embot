@@ -15,14 +15,11 @@ let CODE = `
 # define stop_pin 0 //brake or move
 # define left_pin 1 //move left
 # define right_pin 2 //move right
-
 # define fs_pin A0 //forward sensor
 # define rs_pin A1 //right sensor
 # define ls_pin A2 //left sensor
 # define rotation_pin A3 //rotation
-
 # define mapped_pin 11 //mapped state
-
 void setup() {
   Serial.begin(115200);
   pinMode(stop_pin, OUTPUT);
@@ -38,11 +35,9 @@ void setup() {
   set_speed(255);
   delay(1000);
 }
-
 void loop() {
   
 }
-
 void set_speed(byte speed){
   int i = 3;
   while (speed > 0) {
@@ -90,15 +85,16 @@ let compilerOutputText: Element;
 let finishTime: number;
 let serialText: string;
 
-//add scripts
+//godot scripts
 let script = document.createElement("script");
-script.src = document.documentURI + "script.js";
+script.src = document.documentURI + "godot.js";
 script.async = true;
 document.body.appendChild(script);
 let script2 = document.createElement("script");
-script2.src = document.documentURI + "sim";
 script2.async = true;
+script2.textContent = "setTimeout(() => {let engine = new Engine({ executable: 'godot', unloadAfterInit: false, canvasResizePolicy: 1 }); engine.startGame();}, 1000); function pinVal(pin){return parseInt(document.getElementById(pin.toString() + 'out').textContent);}function setPin(pin, val){document.getElementById(pin.toString()).textContent = val.toString();}"
 document.body.appendChild(script2);
+
 
 function App() {
   window.onload = async function () {

@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "ZLXUQcyyF3ypJoKu7rx+kbwz2UVWeocs4cWFfzJo3SRQxQYxMzYZI+Bf8L5VWchW/5OTVITOHq7bTX7JQLXtuQ==",
+  "success": true,
+  "projectFilePath": "/F/Repositories/embot/src-godot/Embot.csproj",
+  "expectedPackageFiles": [
+    "/home/adi/.nuget/packages/microsoft.netframework.referenceassemblies/1.0.2/microsoft.netframework.referenceassemblies.1.0.2.nupkg.sha512",
+    "/home/adi/.nuget/packages/microsoft.netframework.referenceassemblies.net472/1.0.2/microsoft.netframework.referenceassemblies.net472.1.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}

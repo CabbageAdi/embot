@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>My Template</title>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <script src="godot.js"></script>
+        <script>
+            var engine = new Engine({ executable: 'godot', unloadAfterInit: false, canvasResizePolicy: 1 });
+            engine.startGame();
+        </script>
+        <script>
+            function pinVal(pin){
+                return parseInt(document.getElementById(pin.toString() + 'out').textContent);
+            }
+
+            function setPin(pin, val){
+                document.getElementById(pin.toString()).textContent = val.toString();
+            }
+        </script>
+    </body>
+</html>
+
