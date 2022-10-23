@@ -23,4 +23,5 @@ yarn-debug.log*
 yarn-error.log*
 
 .idea/
-/MakeAThonSim/cmake-build-debug/
+/src-godot/.mono/
+/src-godot/.vs/

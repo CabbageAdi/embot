@@ -27,7 +27,7 @@ body {
 .success {
   transition: all 0.3s ease-in-out;
   color: #3d3d3d;
-  margin-left: 700px;
+  margin-left: 530px;
   border: 1px solid #00ff00;
   background: #00ff00;
 }

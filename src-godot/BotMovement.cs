@@ -9,8 +9,8 @@ public class BotMovement : RigidBody
     {
     }
 
-    private int prevSec = 0;
-    
+    private float prevDist = 0;
+
     public override void _Process(float delta)
     {
         //movement
@@ -37,13 +37,18 @@ public class BotMovement : RigidBody
         //raycasts
         var screenSpace = this.GetWorld().DirectSpaceState;
 
-        var raycastResult = screenSpace.IntersectRay(this.Translation, Vector3.Back * 50);
+        var raycastResult = screenSpace.IntersectRay(this.Translation, this.Translation + Vector3.Back * 50);
 
         var distance = 
             Mathf.Round(((Vector3)raycastResult["position"] - this.Translation).Round().Length()) - 1;
 
-        distance /= 5;
+        distance /= 10;
 
-        JavaScript.Eval($"setPin(0, {distance})", true);
+        if (distance != prevDist)
+        {
+            JavaScript.Eval($"setPin(0, {distance})", true);
+        }
+
+        prevDist = distance;
     }
 }

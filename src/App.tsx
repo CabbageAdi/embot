@@ -11,7 +11,7 @@ import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/ext-beautify";
 
-let CODE = `
+let CPPCODE = `
 # define stop_pin 0 //brake or move
 # define left_pin 1 //move left
 # define right_pin 2 //move right
@@ -20,6 +20,7 @@ let CODE = `
 # define ls_pin A2 //left sensor
 # define rotation_pin A3 //rotation
 # define mapped_pin 11 //mapped state
+
 void setup() {
   Serial.begin(115200);
   pinMode(stop_pin, OUTPUT);
@@ -35,9 +36,11 @@ void setup() {
   set_speed(255);
   delay(1000);
 }
+
 void loop() {
   
 }
+
 void set_speed(byte speed){
   int i = 3;
   while (speed > 0) {
@@ -48,6 +51,10 @@ void set_speed(byte speed){
   for (;i < 11; i++) digitalWrite(i, LOW);
 }
 `.trim();
+
+let JSCODE = 'console.log("life")'.trim();
+
+let CODE = CPPCODE;
 
 const outPins: number[] = [
   0, //stop or start
@@ -71,7 +78,8 @@ const inPins: number[] = [
 ];
 
 const statePins: number[] = [
-  11, //finished first run
+  11, //region 1
+  12, //region 2
   13, //finished entire thing
 ];
 
@@ -82,7 +90,7 @@ let runButton: Element;
 let stopButton: Element;
 let compilerOutputText: Element;
 
-let finishTime: number;
+let times: number[] = [];
 let serialText: string;
 
 //godot scripts
@@ -124,15 +132,15 @@ function App() {
     //reset on stop
     var element = document.createElement("div");
     element.hidden = true;
-    element.id = "12out";
+    element.id = "14out";
     document.body.appendChild(element);
   };
+
 
   function executeProgram(hex: string) {
     runner = new AVRRunner(hex);
     const statusLabel = document.querySelector("#status-label") as Element;
     let startTime = new Date().getTime();
-    let mapped = false;
 
     runner.portD.addListener((value) => {
       outPins.forEach((pin) => {
@@ -156,7 +164,6 @@ function App() {
 
     runner.execute((cpu) => {
       const time = (new Date().getTime() - startTime) / 1000;
-      finishTime = time;
       const formattedTime = formatTime(time);
       statusLabel.textContent = "Simulation time: " + formattedTime;
       inPins.forEach((pin) => {
@@ -173,12 +180,12 @@ function App() {
                 ? true
                 : false;
         (runner as AVRRunner).portB.setPin(pin - 8, val);
-        if (pin === 11 && val && !mapped) {
-          mapped = true;
+        if (pin === 11 && val) {
+          times.push(time);
           startTime = new Date().getTime();
         }
         if (pin === 13 && val) {
-          finishTime = time;
+          times.push(time);
           submit();
           stopCode();
         }
@@ -186,28 +193,45 @@ function App() {
     });
   }
 
+  function executeJs() {
+    let sc = document.createElement("script");
+    sc.async = true;
+    sc.textContent = CODE;
+    sc.id = "code";
+    document.body.appendChild(sc);
+
+
+  }
+
   async function compileAndRun() {
     serialText = "";
     SerialLog("Compiling...");
-    finishTime = 0;
+    times = [];
     statePins.forEach((pin) => {
       (document.getElementById(pin.toString()) as Element).textContent = "0";
     });
 
     runButton.setAttribute("disabled", "1");
-    try {
-      const result = await buildHex(CODE);
-      SerialLog(result.stderr || result.stdout);
-      if (result.hex) {
-        SerialLog("Program running.\n\nSerial Output:\n");
-        stopButton.removeAttribute("disabled");
-        executeProgram(result.hex);
-      } else {
+
+    if (lang) {
+      try {
+        const result = await buildHex(CODE);
+        SerialLog(result.stderr || result.stdout);
+        if (result.hex) {
+          SerialLog("Program running.\n\nSerial Output:\n");
+          stopButton.removeAttribute("disabled");
+          executeProgram(result.hex);
+        } else {
+          runButton.removeAttribute("disabled");
+        }
+      } catch (err) {
         runButton.removeAttribute("disabled");
+        alert("Failed: " + err);
       }
-    } catch (err) {
-      runButton.removeAttribute("disabled");
-      alert("Failed: " + err);
+    }
+    else {
+      executeJs();
+      stopButton.removeAttribute("disabled");
     }
   }
 
@@ -219,15 +243,26 @@ function App() {
   function stopCode() {
     stopButton.setAttribute("disabled", "1");
     runButton.removeAttribute("disabled");
-    if (runner) {
-      runner.stop();
-      runner = null;
+    
+    if (lang) {
+      if (runner) {
+        runner.stop();
+        runner = null;
+      }
     }
+    else {
+      console.log()
+      let sc = document.getElementById("code");
+      sc?.parentNode?.removeChild(sc);
+    }
+
+    times = [];
+
     compilerOutputText.textContent = null;
 
-    (document.getElementById("12out") as Element).textContent = "1";
+    (document.getElementById("14out") as Element).textContent = "1";
     setTimeout(function () {
-      (document.getElementById("12out") as Element).textContent = "0";
+      (document.getElementById("14out") as Element).textContent = "0";
     }, 200);
 
     outPins.forEach((pin) => {
@@ -244,7 +279,7 @@ function App() {
 
   async function submit() {
     const statusLabel = document.querySelector("#status-label") as Element;
-    statusLabel.textContent = "Submitted: " + formatTime(finishTime);;
+    statusLabel.textContent = "Submitted: Total time = " + formatTime(times.reduce((accumVariable, curValue) => accumVariable + curValue , 0));
   }
 
   const [serial, setSerial] = React.useState(true);
@@ -259,9 +294,22 @@ function App() {
       setSerial(false);
     }
   }
+
+  const [lang, setLang] = React.useState(true);
+  async function langSet(val: boolean) {
+    if (val) {
+      CODE = CPPCODE;
+      setLang(true);
+    }
+    else {
+      CODE = JSCODE;
+      setLang(false);
+    }
+  }
+
   return (
     <div>
-      <div id="status">Downloading...</div>
+      <p>test</p>
       <canvas id="canvas" />
       <br />
       <div id="status-label" className={"status-label"} />
@@ -271,13 +319,25 @@ function App() {
             onClick={async () => await serialSet(true)}
             className={"button toggle-btn"}
           >
-            <b>Serial Monitor</b>
+            <b>{lang ? "Serial Monitor" : "Console"}</b>
           </button>
           <button
             onClick={async () => await serialSet(false)}
             className={"button toggle-btn"}
           >
             <b>Editor</b>
+          </button>
+          <button
+            onClick={async () => await langSet(true)}
+            className={"button toggle-btn"}
+          >
+            <b>C++</b>
+          </button>
+          <button
+            onClick={async () => await langSet(false)}
+            className={"button toggle-btn"}
+          >
+            <b>Javascript</b>
           </button>
           <button id="run-button" className={"button success"} onClick={async () => { await serialSet(true); compileAndRun(); }}>
             <b>Run</b>

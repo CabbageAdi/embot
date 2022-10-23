@@ -1,9 +1,0 @@
-/F/Repositories/embot/src-godot/.mono/temp/bin/ExportRelease/Embot.dll
-/F/Repositories/embot/src-godot/.mono/temp/bin/ExportRelease/Embot.pdb
-/F/Repositories/embot/src-godot/.mono/temp/obj/ExportRelease/Embot.csproj.AssemblyReference.cache
-/F/Repositories/embot/src-godot/.mono/temp/obj/ExportRelease/Embot.GeneratedMSBuildEditorConfig.editorconfig
-/F/Repositories/embot/src-godot/.mono/temp/obj/ExportRelease/Embot.AssemblyInfoInputs.cache
-/F/Repositories/embot/src-godot/.mono/temp/obj/ExportRelease/Embot.AssemblyInfo.cs
-/F/Repositories/embot/src-godot/.mono/temp/obj/ExportRelease/Embot.csproj.CoreCompileInputs.cache
-/F/Repositories/embot/src-godot/.mono/temp/obj/ExportRelease/Embot.dll
-/F/Repositories/embot/src-godot/.mono/temp/obj/ExportRelease/Embot.pdb
