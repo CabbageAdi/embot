@@ -52,7 +52,17 @@ void set_speed(byte speed){
 }
 `.trim();
 
-let JSCODE = 'console.log("life")'.trim();
+let JSCODE = `
+
+loop();
+
+function loop() {
+
+
+  setTimeout(() => loop(), 10);
+}
+
+`.trim();
 
 let CODE = CPPCODE;
 
@@ -136,6 +146,7 @@ function App() {
     document.body.appendChild(element);
   };
 
+  const [lang, setLang] = React.useState(true);
 
   function executeProgram(hex: string) {
     runner = new AVRRunner(hex);
@@ -146,7 +157,7 @@ function App() {
       outPins.forEach((pin) => {
         if (pin < 8)
           (
-              document.getElementById(pin.toString() + "out") as Element
+            document.getElementById(pin.toString() + "out") as Element
           ).textContent = runner?.portD.pinState(pin).toString() ?? null;
       });
     });
@@ -154,7 +165,7 @@ function App() {
       outPins.forEach((pin) => {
         if (pin > 7)
           (
-              document.getElementById(pin.toString() + "out") as Element
+            document.getElementById(pin.toString() + "out") as Element
           ).textContent = runner?.portB.pinState(pin - 8).toString() ?? null;
       });
     });
@@ -162,28 +173,33 @@ function App() {
       SerialLog(String.fromCharCode(value));
     };
 
+    let prev11 = false;
+    let prev12 = false;
+
     runner.execute((cpu) => {
       const time = (new Date().getTime() - startTime) / 1000;
       const formattedTime = formatTime(time);
       statusLabel.textContent = "Simulation time: " + formattedTime;
       inPins.forEach((pin) => {
         const val = parseFloat(
-            document.getElementById(pin.toString())?.textContent as string
+          document.getElementById(pin.toString())?.textContent as string
         );
         (runner as AVRRunner).adc.channelValues[pin] = val;
       });
       statePins.forEach((pin) => {
         const val =
-            parseInt(
-                document.getElementById(pin.toString())?.textContent as string
-            ) === 1
-                ? true
-                : false;
+          parseInt(
+            document.getElementById(pin.toString())?.textContent as string
+          ) === 1
+            ? true
+            : false;
         (runner as AVRRunner).portB.setPin(pin - 8, val);
-        if (pin === 11 && val) {
+        if ((pin === 11 && val !== prev11) || (pin === 12 && val !== prev12)) {
           times.push(time);
           startTime = new Date().getTime();
         }
+        if (pin === 11) prev11 = val;
+        if (pin === 12) prev12 = val;
         if (pin === 13 && val) {
           times.push(time);
           submit();
@@ -200,7 +216,40 @@ function App() {
     sc.id = "code";
     document.body.appendChild(sc);
 
+    let prev11 = false;
+    let prev12 = false;
 
+    const statusLabel = document.querySelector("#status-label") as Element;
+    let startTime = new Date().getTime();
+
+    let updateFunc = () => {
+      statePins.forEach((pin) => {
+        const time = (new Date().getTime() - startTime) / 1000;
+        const formattedTime = formatTime(time);
+        statusLabel.textContent = "Simulation time: " + formattedTime;
+
+        const val =
+          parseInt(
+            document.getElementById(pin.toString())?.textContent as string
+          ) === 1
+            ? true
+            : false;
+        if ((pin === 11 && val !== prev11) || (pin === 12 && val !== prev12)) {
+          times.push(time);
+          startTime = new Date().getTime();
+        }
+        if (pin === 11) prev11 = val;
+        if (pin === 12) prev12 = val;
+        if (pin === 13 && val) {
+          times.push(time);
+          submit();
+          stopCode();
+        }
+        setTimeout(updateFunc, 10);
+      });
+    }
+
+    updateFunc();
   }
 
   async function compileAndRun() {
@@ -243,7 +292,7 @@ function App() {
   function stopCode() {
     stopButton.setAttribute("disabled", "1");
     runButton.removeAttribute("disabled");
-    
+
     if (lang) {
       if (runner) {
         runner.stop();
@@ -267,7 +316,7 @@ function App() {
 
     outPins.forEach((pin) => {
       (document.getElementById(pin.toString() + "out") as Element).textContent =
-          null;
+        null;
     });
     inPins.forEach((pin) => {
       (document.getElementById(pin.toString()) as Element).textContent = null;
@@ -279,14 +328,14 @@ function App() {
 
   async function submit() {
     const statusLabel = document.querySelector("#status-label") as Element;
-    statusLabel.textContent = "Submitted: Total time = " + formatTime(times.reduce((accumVariable, curValue) => accumVariable + curValue , 0));
+    statusLabel.textContent = "Submitted: Total time = " + formatTime(times.reduce((accumVariable, curValue) => accumVariable + curValue, 0));
   }
 
   const [serial, setSerial] = React.useState(true);
-  async function serialSet(val: boolean){
-    if (val === true){
+  async function serialSet(val: boolean) {
+    if (val === true) {
       setSerial(true);
-      while (document.getElementById("compiler-output-text") === null) {await new Promise(resolve => setTimeout(resolve, 0));};
+      while (document.getElementById("compiler-output-text") === null) { await new Promise(resolve => setTimeout(resolve, 0)); };
       compilerOutputText = document.getElementById("compiler-output-text") as Element;
       compilerOutputText.textContent = serialText;
     }
@@ -295,7 +344,6 @@ function App() {
     }
   }
 
-  const [lang, setLang] = React.useState(true);
   async function langSet(val: boolean) {
     if (val) {
       CODE = CPPCODE;
@@ -308,77 +356,84 @@ function App() {
   }
 
   return (
-    <div>
-      <p>test</p>
-      <canvas id="canvas" />
-      <br />
-      <div id="status-label" className={"status-label"} />
-      <div className="app-container">
-        <div className="code-toolbar">
-          <button
-            onClick={async () => await serialSet(true)}
-            className={"button toggle-btn"}
-          >
-            <b>{lang ? "Serial Monitor" : "Console"}</b>
-          </button>
-          <button
-            onClick={async () => await serialSet(false)}
-            className={"button toggle-btn"}
-          >
-            <b>Editor</b>
-          </button>
-          <button
-            onClick={async () => await langSet(true)}
-            className={"button toggle-btn"}
-          >
-            <b>C++</b>
-          </button>
-          <button
-            onClick={async () => await langSet(false)}
-            className={"button toggle-btn"}
-          >
-            <b>Javascript</b>
-          </button>
-          <button id="run-button" className={"button success"} onClick={async () => { await serialSet(true); compileAndRun(); }}>
-            <b>Run</b>
-          </button>
-          <button id="stop-button" className={"button danger"} disabled>
-            <b>Stop</b>
-          </button>
-        </div>
-        {serial ? (
-          <div className="compiler-output">
-            <div className={"serial-toolbar"}>
-              <div>Serial Monitor</div>
-            </div>
-            <ScrollToBottom className={"scroll"}>
-              <p id="compiler-output-text"></p>
-            </ScrollToBottom>
-          </div>
-        ) : (
-          <AceEditor
-            value={CODE}
-            onChange={(code) => (CODE = code)}
-            width={"auto"}
-            mode="java"
-            theme="monokai"
-            fontSize={14}
-            className="editor"
-            showPrintMargin={true}
-            showGutter={true}
-            highlightActiveLine={true}
-            setOptions={{
-              enableBasicAutocompletion: false,
-              enableLiveAutocompletion: false,
-              enableSnippets: false,
-              showLineNumbers: true,
-              tabSize: 2,
-            }}
-          />
-        )}
+    <>
+      <div className="splits" id="splits">
+        <table>
+          <tr><th>Sector</th><th>Time</th></tr>
+          {times.forEach((v, i) => { <tr><th>{i}</th><th>{v}</th></tr> })}
+        </table>
       </div>
-      <script>editorLoaded();</script>
-    </div>
+      <div>
+        <canvas id="canvas" />
+        <br />
+        <div id="status-label" className={"status-label"} />
+        <div className="app-container">
+          <div className="code-toolbar">
+            <button
+              onClick={async () => await serialSet(true)}
+              className={"button toggle-btn"}
+            >
+              <b>{lang ? "Serial Monitor" : "Console"}</b>
+            </button>
+            <button
+              onClick={async () => await serialSet(false)}
+              className={"button toggle-btn"}
+            >
+              <b>Editor</b>
+            </button>
+            <button
+              onClick={async () => await langSet(true)}
+              className={"button toggle-btn"}
+            >
+              <b>C++</b>
+            </button>
+            <button
+              onClick={async () => await langSet(false)}
+              className={"button toggle-btn"}
+            >
+              <b>Javascript</b>
+            </button>
+            <button id="run-button" className={"button success"} onClick={async () => { await serialSet(true); compileAndRun(); }}>
+              <b>Run</b>
+            </button>
+            <button id="stop-button" className={"button danger"} disabled>
+              <b>Stop</b>
+            </button>
+          </div>
+          {serial ? (
+            <div className="compiler-output">
+              <div className={"serial-toolbar"}>
+                <div>Serial Monitor</div>
+              </div>
+              <ScrollToBottom className={"scroll"}>
+                <p id="compiler-output-text"></p>
+              </ScrollToBottom>
+            </div>
+          ) : (
+            <AceEditor
+              value={CODE}
+              onChange={(code) => (CODE = code)}
+              width={"auto"}
+              mode="java"
+              theme="monokai"
+              fontSize={14}
+              className="editor"
+              showPrintMargin={true}
+              showGutter={true}
+              highlightActiveLine={true}
+              setOptions={{
+                enableBasicAutocompletion: false,
+                enableLiveAutocompletion: false,
+                enableSnippets: false,
+                showLineNumbers: true,
+                tabSize: 2,
+              }}
+            />
+          )}
+        </div>
+        <script>editorLoaded();</script>
+      </div>
+    </>
   );
 }
 

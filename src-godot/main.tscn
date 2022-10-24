@@ -2,10 +2,9 @@
 
 [ext_resource path="res://BotMovement.cs" type="Script" id=1]
 [ext_resource path="res://FreeCamera.gd" type="Script" id=2]
+[ext_resource path="res://robot.obj" type="ArrayMesh" id=3]
 
 [sub_resource type="BoxShape" id=1]
-
-[sub_resource type="CubeMesh" id=2]
 
 [sub_resource type="BoxShape" id=3]
 extents = Vector3( 1, 0.001, 1 )
@@ -26,12 +25,14 @@ script = ExtResource( 2 )
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.73308, 0 )
 script = ExtResource( 1 )
 Speed = 5.0
+AngularSpeed = 2.0
 
 [node name="CollisionShape" type="CollisionShape" parent="Player"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1.7, 0, 0, 0 )
 shape = SubResource( 1 )
 
 [node name="MeshInstance" type="MeshInstance" parent="Player"]
-mesh = SubResource( 2 )
+mesh = ExtResource( 3 )
 
 [node name="Env" type="Node" parent="."]
 
@@ -45,10 +46,37 @@ shape = SubResource( 3 )
 mesh = SubResource( 4 )
 
 [node name="Wall" type="StaticBody" parent="Env"]
-transform = Transform( 1, 0, 0, 0, 11, 0, 0, 0, 30, -10, 11, 0 )
+transform = Transform( 1, 0, 0, 0, 11, 0, 0, 0, 30, -10, 10, 0 )
 
 [node name="CollisionShape" type="CollisionShape" parent="Env/Wall"]
 shape = SubResource( 5 )
 
 [node name="MeshInstance" type="MeshInstance" parent="Env/Wall"]
+mesh = SubResource( 6 )
+
+[node name="Wall2" type="StaticBody" parent="Env"]
+transform = Transform( 1, 0, 0, 0, 11, 0, 0, 0, 30, 10, 10, 0 )
+
+[node name="CollisionShape" type="CollisionShape" parent="Env/Wall2"]
+shape = SubResource( 5 )
+
+[node name="MeshInstance" type="MeshInstance" parent="Env/Wall2"]
+mesh = SubResource( 6 )
+
+[node name="Wall3" type="StaticBody" parent="Env"]
+transform = Transform( -4.37114e-08, 0, -30, 0, 11, 0, 1, 0, -1.31134e-06, 10, 10, -9.77515 )
+
+[node name="CollisionShape" type="CollisionShape" parent="Env/Wall3"]
+shape = SubResource( 5 )
+
+[node name="MeshInstance" type="MeshInstance" parent="Env/Wall3"]
+mesh = SubResource( 6 )
+
+[node name="Wall4" type="StaticBody" parent="Env"]
+transform = Transform( -4.37114e-08, 0, -30, 0, 11, 0, 1, 0, -1.31134e-06, 10, 10, 26.1585 )
+
+[node name="CollisionShape" type="CollisionShape" parent="Env/Wall4"]
+shape = SubResource( 5 )
+
+[node name="MeshInstance" type="MeshInstance" parent="Env/Wall4"]
 mesh = SubResource( 6 )

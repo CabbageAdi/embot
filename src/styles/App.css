@@ -91,3 +91,8 @@ body {
 #compiler-output-text {
   padding-left: 10px;
 }
+
+.splits {
+  color: white;
+  padding-right: 50px;
+}
