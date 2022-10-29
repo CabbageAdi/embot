@@ -1,82 +1,134 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=14 format=2]
 
 [ext_resource path="res://BotMovement.cs" type="Script" id=1]
 [ext_resource path="res://FreeCamera.gd" type="Script" id=2]
-[ext_resource path="res://robot.obj" type="ArrayMesh" id=3]
-
-[sub_resource type="BoxShape" id=1]
+[ext_resource path="res://robot.tscn" type="PackedScene" id=3]
+[ext_resource path="res://arrow.tscn" type="PackedScene" id=4]
+[ext_resource path="res://Roboto-Black.ttf" type="DynamicFontData" id=5]
+[ext_resource path="res://ArrowGenerator.cs" type="Script" id=6]
 
 [sub_resource type="BoxShape" id=3]
 extents = Vector3( 1, 0.001, 1 )
 
 [sub_resource type="PlaneMesh" id=4]
 
+[sub_resource type="SpatialMaterial" id=9]
+albedo_color = Color( 1, 0, 0, 1 )
+
 [sub_resource type="BoxShape" id=5]
 
 [sub_resource type="CubeMesh" id=6]
 
+[sub_resource type="CubeMesh" id=8]
+
+[sub_resource type="DynamicFont" id=10]
+size = 30
+font_data = ExtResource( 5 )
+
 [node name="Spatial" type="Spatial"]
+
+[node name="robot" parent="." instance=ExtResource( 3 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -1 )
+script = ExtResource( 1 )
+Speed = 5.0
+AngularSpeed = 2.0
+Sections = [ NodePath("../Sections/Ground"), NodePath("../Sections/Arrow") ]
+SectionTimePath = NodePath("../UI/Label")
 
 [node name="Camera" type="Camera" parent="."]
 transform = Transform( 1, 0, 0, 0, 0.708019, 0.706193, 0, -0.706193, 0.708019, 0, 15.6919, 12.8093 )
 script = ExtResource( 2 )
 
-[node name="Player" type="RigidBody" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.73308, 0 )
-script = ExtResource( 1 )
-Speed = 5.0
-AngularSpeed = 2.0
+[node name="Sections" type="Spatial" parent="."]
 
-[node name="CollisionShape" type="CollisionShape" parent="Player"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1.7, 0, 0, 0 )
-shape = SubResource( 1 )
+[node name="Ground" type="StaticBody" parent="Sections"]
+transform = Transform( 17.4873, 0, 0, 0, 0.999254, 0, 0, 0, 34.0277, 0, 0, 17.7002 )
 
-[node name="MeshInstance" type="MeshInstance" parent="Player"]
-mesh = ExtResource( 3 )
-
-[node name="Env" type="Node" parent="."]
-
-[node name="Ground" type="StaticBody" parent="Env"]
-transform = Transform( 223.596, 0, 0, 0, 1, 0, 0, 0, 163.091, 0, 0, 0 )
-
-[node name="CollisionShape" type="CollisionShape" parent="Env/Ground"]
+[node name="CollisionShape" type="CollisionShape" parent="Sections/Ground"]
 shape = SubResource( 3 )
 
-[node name="MeshInstance" type="MeshInstance" parent="Env/Ground"]
+[node name="MeshInstance" type="MeshInstance" parent="Sections/Ground"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 mesh = SubResource( 4 )
 
-[node name="Wall" type="StaticBody" parent="Env"]
-transform = Transform( 1, 0, 0, 0, 11, 0, 0, 0, 30, -10, 10, 0 )
+[node name="Arrow" type="StaticBody" parent="Sections"]
+transform = Transform( 33.6953, 0, 0, 0, 0.999254, 0, 0, 0, 34.0277, 22.2175, -3.8147e-06, -50.9161 )
 
-[node name="CollisionShape" type="CollisionShape" parent="Env/Wall"]
+[node name="CollisionShape" type="CollisionShape" parent="Sections/Arrow"]
+shape = SubResource( 3 )
+
+[node name="MeshInstance" type="MeshInstance" parent="Sections/Arrow"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00434917, 0.0837188, 0.000805855 )
+mesh = SubResource( 4 )
+material/0 = SubResource( 9 )
+
+[node name="Walls" type="Spatial" parent="."]
+
+[node name="Wall" type="StaticBody" parent="Walls"]
+transform = Transform( 1, 0, 0, 0, 11, 0, 0, 0, 64.505, -10, 10, 0 )
+
+[node name="CollisionShape" type="CollisionShape" parent="Walls/Wall"]
 shape = SubResource( 5 )
 
-[node name="MeshInstance" type="MeshInstance" parent="Env/Wall"]
+[node name="MeshInstance" type="MeshInstance" parent="Walls/Wall"]
 mesh = SubResource( 6 )
 
-[node name="Wall2" type="StaticBody" parent="Env"]
-transform = Transform( 1, 0, 0, 0, 11, 0, 0, 0, 30, 10, 10, 0 )
+[node name="Wall2" type="StaticBody" parent="Walls"]
+transform = Transform( 1, 0, 0, 0, 11, 0, 0, 0, 30, 16.3038, 10.8645, 15.1789 )
 
-[node name="CollisionShape" type="CollisionShape" parent="Env/Wall2"]
+[node name="CollisionShape" type="CollisionShape" parent="Walls/Wall2"]
 shape = SubResource( 5 )
 
-[node name="MeshInstance" type="MeshInstance" parent="Env/Wall2"]
+[node name="MeshInstance" type="MeshInstance" parent="Walls/Wall2"]
 mesh = SubResource( 6 )
 
-[node name="Wall3" type="StaticBody" parent="Env"]
-transform = Transform( -4.37114e-08, 0, -30, 0, 11, 0, 1, 0, -1.31134e-06, 10, 10, -9.77515 )
+[node name="Wall3" type="StaticBody" parent="Walls"]
+transform = Transform( -4.37114e-08, 0, -30, 0, 11, 0, 1, 0, -1.31134e-06, 45.444, 10.8583, -15.7116 )
 
-[node name="CollisionShape" type="CollisionShape" parent="Env/Wall3"]
+[node name="CollisionShape" type="CollisionShape" parent="Walls/Wall3"]
 shape = SubResource( 5 )
 
-[node name="MeshInstance" type="MeshInstance" parent="Env/Wall3"]
+[node name="MeshInstance" type="MeshInstance" parent="Walls/Wall3"]
+transform = Transform( 1, 0, 1.13687e-13, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 mesh = SubResource( 6 )
 
-[node name="Wall4" type="StaticBody" parent="Env"]
+[node name="Wall5" type="StaticBody" parent="Walls"]
+transform = Transform( -4.37114e-08, 0, -30, 0, 11, 0, 1, 0, -1.31134e-06, 13.5829, 10, -58.5136 )
+
+[node name="CollisionShape" type="CollisionShape" parent="Walls/Wall5"]
+shape = SubResource( 5 )
+
+[node name="MeshInstance" type="MeshInstance" parent="Walls/Wall5"]
+transform = Transform( 1, 0, 1.13687e-13, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
+mesh = SubResource( 6 )
+
+[node name="Wall4" type="StaticBody" parent="Walls"]
 transform = Transform( -4.37114e-08, 0, -30, 0, 11, 0, 1, 0, -1.31134e-06, 10, 10, 26.1585 )
 
-[node name="CollisionShape" type="CollisionShape" parent="Env/Wall4"]
+[node name="CollisionShape" type="CollisionShape" parent="Walls/Wall4"]
 shape = SubResource( 5 )
 
-[node name="MeshInstance" type="MeshInstance" parent="Env/Wall4"]
+[node name="MeshInstance" type="MeshInstance" parent="Walls/Wall4"]
 mesh = SubResource( 6 )
+
+[node name="Arrow" type="Spatial" parent="."]
+
+[node name="ArrowGen" type="MeshInstance" parent="Arrow"]
+transform = Transform( -0.051325, 0, 0.998682, 0, 1, 0, -0.998682, 0, -0.051325, 32.8376, 1.79906, -43.9096 )
+mesh = SubResource( 8 )
+skeleton = NodePath("../..")
+script = ExtResource( 6 )
+Delay = 3000.0
+ArrowScene = ExtResource( 4 )
+
+[node name="UI" type="Control" parent="."]
+margin_right = 1052.0
+margin_bottom = 399.0
+
+[node name="Label" type="Label" parent="UI"]
+margin_left = 1.0
+margin_top = 9.0
+margin_right = 455.0
+margin_bottom = 233.0
+custom_fonts/font = SubResource( 10 )
+text = "Hello World"

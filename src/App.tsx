@@ -118,7 +118,6 @@ function App() {
   window.onload = async function () {
     runButton = document.querySelector("#run-button") as Element;
     stopButton = document.querySelector("#stop-button") as Element;
-    stopButton.addEventListener("click", stopCode);
     compilerOutputText = document.getElementById("compiler-output-text") as Element;
 
     outPins.forEach((pin) => {
@@ -289,7 +288,7 @@ function App() {
     if (compilerOutputText !== null) compilerOutputText.textContent = serialText;
   }
 
-  function stopCode() {
+  async function stopCode() {
     stopButton.setAttribute("disabled", "1");
     runButton.removeAttribute("disabled");
 
@@ -356,84 +355,76 @@ function App() {
   }
 
   return (
-    <>
-      <div className="splits" id="splits">
-        <table>
-          <tr><th>Sector</th><th>Time</th></tr>
-          {times.forEach((v, i) => { <tr><th>{i}</th><th>{v}</th></tr> })}
-        </table>
-      </div>
-      <div>
-        <canvas id="canvas" />
-        <br />
-        <div id="status-label" className={"status-label"} />
-        <div className="app-container">
-          <div className="code-toolbar">
-            <button
-              onClick={async () => await serialSet(true)}
-              className={"button toggle-btn"}
-            >
-              <b>{lang ? "Serial Monitor" : "Console"}</b>
-            </button>
-            <button
-              onClick={async () => await serialSet(false)}
-              className={"button toggle-btn"}
-            >
-              <b>Editor</b>
-            </button>
-            <button
-              onClick={async () => await langSet(true)}
-              className={"button toggle-btn"}
-            >
-              <b>C++</b>
-            </button>
-            <button
-              onClick={async () => await langSet(false)}
-              className={"button toggle-btn"}
-            >
-              <b>Javascript</b>
-            </button>
-            <button id="run-button" className={"button success"} onClick={async () => { await serialSet(true); compileAndRun(); }}>
-              <b>Run</b>
-            </button>
-            <button id="stop-button" className={"button danger"} disabled>
-              <b>Stop</b>
-            </button>
-          </div>
-          {serial ? (
-            <div className="compiler-output">
-              <div className={"serial-toolbar"}>
-                <div>Serial Monitor</div>
-              </div>
-              <ScrollToBottom className={"scroll"}>
-                <p id="compiler-output-text"></p>
-              </ScrollToBottom>
-            </div>
-          ) : (
-            <AceEditor
-              value={CODE}
-              onChange={(code) => (CODE = code)}
-              width={"auto"}
-              mode="java"
-              theme="monokai"
-              fontSize={14}
-              className="editor"
-              showPrintMargin={true}
-              showGutter={true}
-              highlightActiveLine={true}
-              setOptions={{
-                enableBasicAutocompletion: false,
-                enableLiveAutocompletion: false,
-                enableSnippets: false,
-                showLineNumbers: true,
-                tabSize: 2,
-              }}
-            />
-          )}
+    <div>
+      <canvas id="canvas" />
+      <br />
+      <div id="status-label" className={"status-label"} />
+      <div className="app-container">
+        <div className="code-toolbar">
+          <button
+            onClick={async () => await serialSet(true)}
+            className={"button toggle-btn"}
+          >
+            <b>{lang ? "Serial Monitor" : "Console"}</b>
+          </button>
+          <button
+            onClick={async () => await serialSet(false)}
+            className={"button toggle-btn"}
+          >
+            <b>Editor</b>
+          </button>
+          <button
+            onClick={async () => await langSet(true)}
+            className={"button toggle-btn"}
+          >
+            <b>C++</b>
+          </button>
+          <button
+            onClick={async () => await langSet(false)}
+            className={"button toggle-btn"}
+          >
+            <b>Javascript</b>
+          </button>
+          <button id="run-button" className={"button success"} onClick={async () => { await serialSet(true); compileAndRun(); }}>
+            <b>Run</b>
+          </button>
+          <button id="stop-button" className={"button danger"} disabled onClick={async () => await stopCode()}>
+            <b>Stop</b>
+          </button>
         </div>
-        <script>editorLoaded();</script>
+        {serial ? (
+          <div className="compiler-output">
+            <div className={"serial-toolbar"}>
+              <div>Serial Monitor</div>
+            </div>
+            <ScrollToBottom className={"scroll"}>
+              <p id="compiler-output-text"></p>
+            </ScrollToBottom>
+          </div>
+        ) : (
+          <AceEditor
+            value={CODE}
+            onChange={(code) => (CODE = code)}
+            width={"auto"}
+            mode="java"
+            theme="monokai"
+            fontSize={14}
+            className="editor"
+            showPrintMargin={true}
+            showGutter={true}
+            highlightActiveLine={true}
+            setOptions={{
+              enableBasicAutocompletion: false,
+              enableLiveAutocompletion: false,
+              enableSnippets: false,
+              showLineNumbers: true,
+              tabSize: 2,
+            }}
+          />
+        )}
       </div>
-    </>
+      <script>editorLoaded();</script>
+    </div>
   );
 }
 
