@@ -40,11 +40,11 @@ public class BotMovement : RigidBody
     {
         //movement
         var v = Vector3.Zero;
-        if (Input.IsKeyPressed((int)KeyList.Up) || JavaScript.Eval($"pinVal(0)") as int? == 1)
+        if (Input.IsKeyPressed((int)KeyList.Up) || (PinVal(0) && !PinVal(1) && !PinVal(2)))
         {
             v += Vector3.Forward.Rotated(Vector3.Up, this.Rotation.y) * Speed;
         }
-        else if (Input.IsKeyPressed((int)KeyList.Down))
+        else if (Input.IsKeyPressed((int)KeyList.Down) || (PinVal(0) && PinVal(1) && PinVal(2)))
         {
             v += Vector3.Back.Rotated(Vector3.Up, this.Rotation.y) * Speed;
         }
@@ -54,11 +54,11 @@ public class BotMovement : RigidBody
         }
 
         var av = this.AngularVelocity;
-        if (Input.IsKeyPressed((int)KeyList.X))
+        if (Input.IsKeyPressed((int)KeyList.X) || (PinVal(0) && !PinVal(1) && PinVal(2)))
         {
             av.y = -AngularSpeed;
         }
-        else if (Input.IsKeyPressed((int)KeyList.Z))
+        else if (Input.IsKeyPressed((int)KeyList.Z) || (PinVal(0) && PinVal(1) && !PinVal(2)))
         {
             av.y = AngularSpeed;
         }
@@ -67,7 +67,7 @@ public class BotMovement : RigidBody
             av.y = 0;
         }
 
-        Height = (Input.IsKeyPressed((int)KeyList.C) || (JavaScript.Eval($"pinVal(5)") as int?) == 1);
+        Height = (Input.IsKeyPressed((int)KeyList.C) || PinVal(13));
 
         if (Height)
         {
@@ -141,7 +141,7 @@ public class BotMovement : RigidBody
         var down = screenSpace.IntersectRay(this.Translation, this.Translation + Vector3.Down * 50, new Godot.Collections.Array(this));
         if (down.Count == 0) return;
         var sectionName = ((StaticBody)down["collider"]).Name;
-        GD.Print(sectionName);
+        // GD.Print(sectionName);
         
         if (sectionName.Contains("Arrow"))
         {
@@ -185,6 +185,15 @@ public class BotMovement : RigidBody
         SectionTimeLabel.Text = labelText;
     }
 
+    public void Collision(Node body)
+    {
+        if (body.Name.Contains("Arrow"))
+        {
+            GD.Print("death");
+            Section++;
+        }
+    }
+
     private Vector3 Raycast(Vector3 startOffset, Vector3 direction)
     {
         var screenSpace = this.GetWorld().DirectSpaceState;
@@ -200,13 +209,9 @@ public class BotMovement : RigidBody
         }
     }
 
-    public void Collision(Node body)
+    private bool PinVal(int pin)
     {
-        if (body.Name.Contains("Arrow"))
-        {
-            GD.Print("death");
-            Section++;
-        }
+        return (JavaScript.Eval($"pinVal({pin})") as int?) == 1;
     }
 }
 

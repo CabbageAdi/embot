@@ -53,18 +53,13 @@ void set_speed(byte speed){
 `.trim();
 
 let JSCODE = `
-
-loop();
+document.getElementById("15out").textContent = setInterval(loop, 100);
 
 function loop() {
-
-
-  setTimeout(() => loop(), 10);
+  
 }
 
 `.trim();
-
-let CODE = CPPCODE;
 
 const outPins: number[] = [
   0, //stop or start
@@ -79,6 +74,8 @@ const outPins: number[] = [
   8,
   9,
   10, //speed pins
+
+  13, //height
 ];
 const inPins: number[] = [
   0, //forward sensor
@@ -86,12 +83,14 @@ const inPins: number[] = [
   2, //left sensor
   3, //rotation
 ];
-
 const statePins: number[] = [
   11, //region 1
   12, //region 2
-  13, //finished entire thing
 ];
+const otherState: number[] = [
+  14, //start and end
+  15, //game loop id
+]
 
 // Set up toolbar
 let runner: AVRRunner | null;
@@ -100,7 +99,6 @@ let runButton: Element;
 let stopButton: Element;
 let compilerOutputText: Element;
 
-let times: number[] = [];
 let serialText: string;
 
 //godot scripts
@@ -115,9 +113,12 @@ document.body.appendChild(script2);
 
 
 function App() {
+  const [CODE, setCode] = React.useState(CPPCODE);
+
   window.onload = async function () {
     runButton = document.querySelector("#run-button") as Element;
     stopButton = document.querySelector("#stop-button") as Element;
+    stopButton.addEventListener("click", stopCode);
     compilerOutputText = document.getElementById("compiler-output-text") as Element;
 
     outPins.forEach((pin) => {
@@ -138,19 +139,18 @@ function App() {
       element.id = pin.toString();
       document.body.appendChild(element);
     });
-    //reset on stop
-    var element = document.createElement("div");
-    element.hidden = true;
-    element.id = "14out";
-    document.body.appendChild(element);
+    otherState.forEach((pin) => {
+      var element = document.createElement("div");
+      element.hidden = true;
+      element.id = pin.toString() + "out";
+      document.body.appendChild(element);
+    });
   };
 
   const [lang, setLang] = React.useState(true);
 
-  function executeProgram(hex: string) {
+  function executeArduino(hex: string) {
     runner = new AVRRunner(hex);
-    const statusLabel = document.querySelector("#status-label") as Element;
-    let startTime = new Date().getTime();
 
     runner.portD.addListener((value) => {
       outPins.forEach((pin) => {
@@ -172,13 +172,7 @@ function App() {
       SerialLog(String.fromCharCode(value));
     };
 
-    let prev11 = false;
-    let prev12 = false;
-
     runner.execute((cpu) => {
-      const time = (new Date().getTime() - startTime) / 1000;
-      const formattedTime = formatTime(time);
-      statusLabel.textContent = "Simulation time: " + formattedTime;
       inPins.forEach((pin) => {
         const val = parseFloat(
           document.getElementById(pin.toString())?.textContent as string
@@ -193,14 +187,7 @@ function App() {
             ? true
             : false;
         (runner as AVRRunner).portB.setPin(pin - 8, val);
-        if ((pin === 11 && val !== prev11) || (pin === 12 && val !== prev12)) {
-          times.push(time);
-          startTime = new Date().getTime();
-        }
-        if (pin === 11) prev11 = val;
-        if (pin === 12) prev12 = val;
         if (pin === 13 && val) {
-          times.push(time);
           submit();
           stopCode();
         }
@@ -210,51 +197,16 @@ function App() {
 
   function executeJs() {
     let sc = document.createElement("script");
-    sc.async = true;
     sc.textContent = CODE;
     sc.id = "code";
     document.body.appendChild(sc);
-
-    let prev11 = false;
-    let prev12 = false;
-
-    const statusLabel = document.querySelector("#status-label") as Element;
-    let startTime = new Date().getTime();
-
-    let updateFunc = () => {
-      statePins.forEach((pin) => {
-        const time = (new Date().getTime() - startTime) / 1000;
-        const formattedTime = formatTime(time);
-        statusLabel.textContent = "Simulation time: " + formattedTime;
-
-        const val =
-          parseInt(
-            document.getElementById(pin.toString())?.textContent as string
-          ) === 1
-            ? true
-            : false;
-        if ((pin === 11 && val !== prev11) || (pin === 12 && val !== prev12)) {
-          times.push(time);
-          startTime = new Date().getTime();
-        }
-        if (pin === 11) prev11 = val;
-        if (pin === 12) prev12 = val;
-        if (pin === 13 && val) {
-          times.push(time);
-          submit();
-          stopCode();
-        }
-        setTimeout(updateFunc, 10);
-      });
-    }
-
-    updateFunc();
   }
 
   async function compileAndRun() {
+    console.log(lang);
+    console.log(CODE);
     serialText = "";
     SerialLog("Compiling...");
-    times = [];
     statePins.forEach((pin) => {
       (document.getElementById(pin.toString()) as Element).textContent = "0";
     });
@@ -268,7 +220,7 @@ function App() {
         if (result.hex) {
           SerialLog("Program running.\n\nSerial Output:\n");
           stopButton.removeAttribute("disabled");
-          executeProgram(result.hex);
+          executeArduino(result.hex);
         } else {
           runButton.removeAttribute("disabled");
         }
@@ -291,20 +243,20 @@ function App() {
   async function stopCode() {
     stopButton.setAttribute("disabled", "1");
     runButton.removeAttribute("disabled");
-
-    if (lang) {
+      
+    let sc = document.getElementById("code");
+    if (sc == null) {
       if (runner) {
         runner.stop();
         runner = null;
       }
     }
     else {
-      console.log()
-      let sc = document.getElementById("code");
+      console.log("stopping js")
       sc?.parentNode?.removeChild(sc);
+      let loopId = Number.parseInt(document.getElementById("15out")?.textContent as string);
+      clearInterval(loopId);
     }
-
-    times = [];
 
     compilerOutputText.textContent = null;
 
@@ -326,8 +278,6 @@ function App() {
   }
 
   async function submit() {
-    const statusLabel = document.querySelector("#status-label") as Element;
-    statusLabel.textContent = "Submitted: Total time = " + formatTime(times.reduce((accumVariable, curValue) => accumVariable + curValue, 0));
   }
 
   const [serial, setSerial] = React.useState(true);
@@ -345,11 +295,13 @@ function App() {
 
   async function langSet(val: boolean) {
     if (val) {
-      CODE = CPPCODE;
+      setCode(CPPCODE);
+      console.log("set to cpp");
       setLang(true);
     }
     else {
-      CODE = JSCODE;
+      setCode(JSCODE);
+      console.log("set to js");
       setLang(false);
     }
   }
@@ -374,13 +326,13 @@ function App() {
             <b>Editor</b>
           </button>
           <button
-            onClick={async () => await langSet(true)}
+            onClick={async () => { await langSet(true) }}
             className={"button toggle-btn"}
           >
             <b>C++</b>
           </button>
           <button
-            onClick={async () => await langSet(false)}
+            onClick={async () => { await langSet(false) }}
             className={"button toggle-btn"}
           >
             <b>Javascript</b>
@@ -388,14 +340,14 @@ function App() {
           <button id="run-button" className={"button success"} onClick={async () => { await serialSet(true); compileAndRun(); }}>
             <b>Run</b>
           </button>
-          <button id="stop-button" className={"button danger"} disabled onClick={async () => await stopCode()}>
+          <button id="stop-button" className={"button danger"} disabled onClick={async () => stopCode()}>
             <b>Stop</b>
           </button>
         </div>
         {serial ? (
           <div className="compiler-output">
             <div className={"serial-toolbar"}>
-              <div>Serial Monitor</div>
+              <div>{lang ? "Serial Monitor" : "Console"}</div>
             </div>
             <ScrollToBottom className={"scroll"}>
               <p id="compiler-output-text"></p>
@@ -404,7 +356,7 @@ function App() {
         ) : (
           <AceEditor
             value={CODE}
-            onChange={(code) => (CODE = code)}
+            onChange={(code) => (setCode(code))}
             width={"auto"}
             mode="java"
             theme="monokai"
