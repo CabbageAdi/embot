@@ -53,10 +53,14 @@ void set_speed(byte speed){
 `.trim();
 
 let JSCODE = `
-document.getElementById("15out").textContent = setInterval(loop, 100);
+set(15, setInterval(loop, 100));
 
 function loop() {
   
+}
+
+function set(pin, value) {
+  document.getElementById(pin + "out").textContent = value;
 }
 
 `.trim();
@@ -220,6 +224,7 @@ function App() {
         if (result.hex) {
           SerialLog("Program running.\n\nSerial Output:\n");
           stopButton.removeAttribute("disabled");
+          (document.getElementById("14out") as Element).textContent = "1";
           executeArduino(result.hex);
         } else {
           runButton.removeAttribute("disabled");
@@ -230,6 +235,7 @@ function App() {
       }
     }
     else {
+      (document.getElementById("14out") as Element).textContent = "1";
       executeJs();
       stopButton.removeAttribute("disabled");
     }
@@ -260,10 +266,7 @@ function App() {
 
     compilerOutputText.textContent = null;
 
-    (document.getElementById("14out") as Element).textContent = "1";
-    setTimeout(function () {
-      (document.getElementById("14out") as Element).textContent = "0";
-    }, 200);
+    (document.getElementById("14out") as Element).textContent = "0";
 
     outPins.forEach((pin) => {
       (document.getElementById(pin.toString() + "out") as Element).textContent =

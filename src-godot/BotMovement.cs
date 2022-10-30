@@ -10,17 +10,21 @@ public class BotMovement : RigidBody
     [Export] public float AngularSpeed;
     [Export] public NodePath[] Sections;
     [Export] public NodePath SectionTimePath;
+    [Export] public Vector3 StartPos = Vector3.Zero;
 
     public MeshInstance Top;
     public CollisionShape TopShape;
     public CollisionShape BottomShape;
     public Label SectionTimeLabel;
-    
+
     public float MaxDist = 50;
     public bool Height = false;
     public int Section = 0;
     public List<float> Times = new List<float>();
-    
+
+    public float StartTime = 0;
+    public bool Start = false;
+
     public override void _Ready()
     {
         this.Connect(Signal.BodyEntered.GetName(), this, nameof(Collision));
@@ -36,6 +40,7 @@ public class BotMovement : RigidBody
     private float prevDistR = 0;
 
     private int prevSec = -1;
+
     public override void _Process(float delta)
     {
         //movement
@@ -52,6 +57,8 @@ public class BotMovement : RigidBody
         {
             v.z = 0;
         }
+        
+        GD.Print(PinVal(0), PinVal(1), PinVal(2));
 
         var av = this.AngularVelocity;
         if (Input.IsKeyPressed((int)KeyList.X) || (PinVal(0) && !PinVal(1) && PinVal(2)))
@@ -90,7 +97,7 @@ public class BotMovement : RigidBody
         var f1 = Raycast(new Vector3(0, h, -1.6f), Vector3.Forward);
         var f2 = Raycast(new Vector3(1, h, -1.6f), Vector3.Forward);
         var f3 = Raycast(new Vector3(-1, h, -1.6f), Vector3.Forward);
-        
+
         var forward = new List<Vector3> { f1, f2, f3 }.OrderBy(r => r.Length()).First();
 
         var l1 = Raycast(new Vector3(-1, h, 0), Vector3.Left);
@@ -98,7 +105,7 @@ public class BotMovement : RigidBody
         var l3 = Raycast(new Vector3(-1, h, -1.7f), Vector3.Left);
 
         var left = new List<Vector3> { l1, l2, l3 }.OrderBy(r => r.Length()).First();
-        
+
         var r1 = Raycast(new Vector3(1, h, 0), Vector3.Right);
         var r2 = Raycast(new Vector3(1, h, 1.7f), Vector3.Right);
         var r3 = Raycast(new Vector3(1, h, -1.7f), Vector3.Right);
@@ -138,11 +145,11 @@ public class BotMovement : RigidBody
         prevDistR = rdist;
 
         //sections
-        var down = screenSpace.IntersectRay(this.Translation, this.Translation + Vector3.Down * 50, new Godot.Collections.Array(this));
+        var down = screenSpace.IntersectRay(this.Translation, this.Translation + Vector3.Down * 50,
+            new Godot.Collections.Array(this));
         if (down.Count == 0) return;
         var sectionName = ((StaticBody)down["collider"]).Name;
-        // GD.Print(sectionName);
-        
+
         if (sectionName.Contains("Arrow"))
         {
             JavaScript.Eval("setPin(11, 1)");
@@ -151,38 +158,73 @@ public class BotMovement : RigidBody
         {
             JavaScript.Eval("setPin(11, 0)");
         }
-        
+
         Section = Array.IndexOf(Sections, Sections.First(s => s.ToString().Contains(sectionName)));
-        
-        if (Section > prevSec)
+
+        //timing
+        if (PinVal(14) && !Start)
         {
-            if (prevSec != -1) 
-                Times[prevSec] = Time.GetTicksMsec();
-            
-            Times.Add(Time.GetTicksMsec());
-            prevSec = Section;
+            StartTime = Time.GetTicksMsec();
+            Start = true;
         }
 
-        if (prevSec >= Section && Times.Count > Section)
+        if (!PinVal(14) && Start)
         {
-            Section = prevSec;
+            this.Translation = StartPos;
+            this.Rotation = Vector3.Zero;
+
+            Times[Section] = Time.GetTicksMsec();
+            
+            var labelText = "";
+            for (var i = 0; i < Times.Count; i++)
+            {
+                var t = Times[i];
+                labelText += TimeSpan.FromMilliseconds(t - (i > 0 ? Times[i - 1] : StartTime)).ToString(@"mm\:ss\:ff");
+                labelText += "\n";
+            }
+
+            SectionTimeLabel.Text = labelText;
+
+            Times = new List<float>();
+            Section = 0;
+            prevSec = -1;
+            StartTime = 0;
+            Start = false;
         }
-        
-        var labelText = "";
-        for (int i = 0; i < Times.Count; i++)
+
+        if (Start)
         {
-            if (i == Section)
+            if (Section > prevSec)
             {
-                labelText += TimeSpan.FromMilliseconds(Time.GetTicksMsec() - Times[i]).ToString(@"mm\:ss\:ff");
+                if (prevSec != -1)
+                    Times[prevSec] = Time.GetTicksMsec();
+
+                Times.Add(Time.GetTicksMsec());
+                prevSec = Section;
             }
-            else
+
+            if (prevSec >= Section && Times.Count > Section)
             {
-                labelText += TimeSpan.FromMilliseconds(Times[i]).ToString(@"mm\:ss\:ff");
+                Section = prevSec;
             }
-            labelText += "\n";
+
+            var labelText = "";
+            for (int i = 0; i < Times.Count; i++)
+            {
+                if (i == Section)
+                {
+                    labelText += TimeSpan.FromMilliseconds(Time.GetTicksMsec() - Times[i]).ToString(@"mm\:ss\:ff");
+                }
+                else
+                {
+                    labelText += TimeSpan.FromMilliseconds(Times[i] - StartTime).ToString(@"mm\:ss\:ff");
+                }
+
+                labelText += "\n";
+            }
+
+            SectionTimeLabel.Text = labelText;
         }
-        
-        SectionTimeLabel.Text = labelText;
     }
 
     public void Collision(Node body)
@@ -211,7 +253,6 @@ public class BotMovement : RigidBody
 
     private bool PinVal(int pin)
     {
-        return (JavaScript.Eval($"pinVal({pin})") as int?) == 1;
+        return (JavaScript.Eval($"pinVal({pin})", true) as float?) == 1;
     }
 }
-
