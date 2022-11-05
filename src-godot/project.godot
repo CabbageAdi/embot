@@ -8,16 +8,6 @@
 
 config_version=4
 
-_global_script_classes=[ {
-"base": "Camera",
-"class": "FreeCamera",
-"language": "GDScript",
-"path": "res://FreeCamera.gd"
-} ]
-_global_script_class_icons={
-"FreeCamera": ""
-}
-
 [application]
 
 config/name="Embot"

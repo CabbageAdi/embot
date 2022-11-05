@@ -10,7 +10,9 @@ public class BotMovement : RigidBody
     [Export] public float AngularSpeed;
     [Export] public NodePath[] Sections;
     [Export] public NodePath SectionTimePath;
-    [Export] public Vector3 StartPos = Vector3.Zero;
+    [Export] public Vector3 StartPos = new Vector3(0, 1, 0);
+    [Export] public float[] SectionStartRotations;
+    [Export] public Vector2[] SectionStartPoints;
 
     public MeshInstance Top;
     public CollisionShape TopShape;
@@ -18,9 +20,10 @@ public class BotMovement : RigidBody
     public Label SectionTimeLabel;
 
     public float MaxDist = 50;
-    public bool Height = false;
+    public bool Up = false;
     public int Section = 0;
     public List<float> Times = new List<float>();
+    public List<int> FailedSections = new List<int>();
 
     public float StartTime = 0;
     public bool Start = false;
@@ -38,53 +41,68 @@ public class BotMovement : RigidBody
     private float prevDistF = 0;
     private float prevDistL = 0;
     private float prevDistR = 0;
+    private float prevRot = 0;
 
     private int prevSec = -1;
 
     public override void _Process(float delta)
     {
+        float newSpeed = 0;
+        for (var i = 3; i < 11; i++){
+            var pin = PinVal(i);
+            if (pin){
+                newSpeed += Mathf.Pow(2, (i - 3));
+            }
+        }
+        var speed = (newSpeed / 255) * Speed;
+        var angularSpeed = (newSpeed / 255) * AngularSpeed;
+
+        if (!OS.HasFeature("JavaScript"))
+        {
+            speed = Speed;
+            angularSpeed = AngularSpeed;
+        }
+
         //movement
         var v = Vector3.Zero;
         if (Input.IsKeyPressed((int)KeyList.Up) || (PinVal(0) && !PinVal(1) && !PinVal(2)))
         {
-            v += Vector3.Forward.Rotated(Vector3.Up, this.Rotation.y) * Speed;
+            v += Vector3.Forward.Rotated(Vector3.Up, this.Rotation.y) * speed;
         }
         else if (Input.IsKeyPressed((int)KeyList.Down) || (PinVal(0) && PinVal(1) && PinVal(2)))
         {
-            v += Vector3.Back.Rotated(Vector3.Up, this.Rotation.y) * Speed;
+            v += Vector3.Back.Rotated(Vector3.Up, this.Rotation.y) * speed;
         }
         else
         {
             v.z = 0;
         }
-        
-        GD.Print(PinVal(0), PinVal(1), PinVal(2));
 
         var av = this.AngularVelocity;
         if (Input.IsKeyPressed((int)KeyList.X) || (PinVal(0) && !PinVal(1) && PinVal(2)))
         {
-            av.y = -AngularSpeed;
+            av.y = -angularSpeed;
         }
         else if (Input.IsKeyPressed((int)KeyList.Z) || (PinVal(0) && PinVal(1) && !PinVal(2)))
         {
-            av.y = AngularSpeed;
+            av.y = angularSpeed;
         }
         else
         {
             av.y = 0;
         }
 
-        Height = (Input.IsKeyPressed((int)KeyList.C) || PinVal(13));
+        Up = (Input.IsKeyPressed((int)KeyList.C) || PinVal(13)) && Sections[Section].ToString().Contains("Blo");
 
-        if (Height)
+        if (Up)
         {
-            Top.Translation = new Vector3(Top.Translation.x, 3, Top.Translation.z);
-            TopShape.Translation = new Vector3(Top.Translation.x, 3, Top.Translation.z);
+            Top.Translation = new Vector3(Top.Translation.x, 1.566f, Top.Translation.z);
+            TopShape.Translation = new Vector3(Top.Translation.x, 1.566f, Top.Translation.z);
         }
         else
         {
-            Top.Translation = new Vector3(Top.Translation.x, 0, Top.Translation.z);
-            TopShape.Translation = new Vector3(Top.Translation.x, 0, Top.Translation.z);
+            Top.Translation = new Vector3(Top.Translation.x, 0.066f, Top.Translation.z);
+            TopShape.Translation = new Vector3(Top.Translation.x, 0.066f, Top.Translation.z);
         }
 
         this.LinearVelocity = v;
@@ -93,7 +111,7 @@ public class BotMovement : RigidBody
         //distances
         var screenSpace = this.GetWorld().DirectSpaceState;
 
-        var h = Height ? 5 : 0;
+        var h = Up ? 1.5f : 0;
         var f1 = Raycast(new Vector3(0, h, -1.6f), Vector3.Forward);
         var f2 = Raycast(new Vector3(1, h, -1.6f), Vector3.Forward);
         var f3 = Raycast(new Vector3(-1, h, -1.6f), Vector3.Forward);
@@ -123,22 +141,32 @@ public class BotMovement : RigidBody
         ldist /= 10;
         rdist /= 10;
 
+        if (forward == Vector3.One * 1000 || fdist > 5) fdist = 5;
+        if (left == Vector3.One * 1000 || ldist > 5) ldist = 5;
+        if (right == Vector3.One * 1000 || rdist > 5) rdist = 5;
+
         if (fdist != prevDistF)
         {
-            JavaScript.Eval($"setPin(0, {fdist})", true);
+            SetPin(0, fdist);
         }
 
         if (ldist != prevDistL)
         {
-            JavaScript.Eval($"setPin(1, {ldist})", true);
+            SetPin(1, ldist);
         }
 
         if (rdist != prevDistR)
         {
-            JavaScript.Eval($"setPin(2, {rdist})", true);
+            SetPin(2, rdist);
         }
 
-        // GD.Print($"{fdist}, {ldist}, {rdist}, {this.RotationDegrees.y}");
+        var rot = Mathf.Round(this.RotationDegrees.y);
+        if (prevRot != rot)
+        {
+            SetPin(2, rot * (5f / 1023f));
+        }
+
+        GD.Print($"{fdist}, {ldist}, {rdist}, {rot:00}");
 
         prevDistF = fdist;
         prevDistL = ldist;
@@ -150,22 +178,37 @@ public class BotMovement : RigidBody
         if (down.Count == 0) return;
         var sectionName = ((StaticBody)down["collider"]).Name;
 
-        if (sectionName.Contains("Arrow"))
+        if (sectionName.Contains("Arr"))
         {
-            JavaScript.Eval("setPin(11, 1)");
+            SetPin(11, 1);
+            SetPin(12, 0);
+        }
+        else if (sectionName.Contains("Blo"))
+        {
+            SetPin(11, 0);
+            SetPin(12, 1);
         }
         else
         {
-            JavaScript.Eval("setPin(11, 0)");
+            SetPin(11, 0);
+            SetPin(12, 0);
         }
 
         Section = Array.IndexOf(Sections, Sections.First(s => s.ToString().Contains(sectionName)));
 
         //timing
+        
+        //start run
         if (PinVal(14) && !Start)
         {
             StartTime = Time.GetTicksMsec();
             Start = true;
+            this.Rotation = Vector3.Zero;
+            Section = 0;
+            Times = new List<float>();
+            prevSec = -1;
+            FailedSections = new List<int>();
+            this.Translation = StartPos;
         }
 
         if (!PinVal(14) && Start)
@@ -180,12 +223,17 @@ public class BotMovement : RigidBody
             {
                 var t = Times[i];
                 labelText += TimeSpan.FromMilliseconds(t - (i > 0 ? Times[i - 1] : StartTime)).ToString(@"mm\:ss\:ff");
+                if (FailedSections.Contains(i))
+                {
+                    labelText += " (failed)";
+                }
                 labelText += "\n";
             }
 
             SectionTimeLabel.Text = labelText;
 
             Times = new List<float>();
+            FailedSections = new List<int>();
             Section = 0;
             prevSec = -1;
             StartTime = 0;
@@ -217,7 +265,11 @@ public class BotMovement : RigidBody
                 }
                 else
                 {
-                    labelText += TimeSpan.FromMilliseconds(Times[i] - StartTime).ToString(@"mm\:ss\:ff");
+                    labelText += TimeSpan.FromMilliseconds(Times[i] - (i > 0 ? Times[i - 1] : StartTime)).ToString(@"mm\:ss\:ff");
+                    if (FailedSections.Contains(i))
+                    {
+                        labelText += " (failed)";
+                    }
                 }
 
                 labelText += "\n";
@@ -225,14 +277,21 @@ public class BotMovement : RigidBody
 
             SectionTimeLabel.Text = labelText;
         }
+
+        if (sectionName.Contains("End"))
+        {
+            JavaScript.Eval($"setPinOut(14, 0)", true);
+        }
     }
 
     public void Collision(Node body)
     {
-        if (body.Name.Contains("Arrow"))
+        if (body.Name.Contains("Arrow") || body.Name.Contains("Block"))
         {
-            GD.Print("death");
+            FailedSections.Add(Section);
             Section++;
+            this.Translation = new Vector3(SectionStartPoints[Section].x, StartPos.y, SectionStartPoints[Section].y);
+            this.RotationDegrees = new Vector3(0, SectionStartRotations[Section], 0);
         }
     }
 
@@ -247,12 +306,17 @@ public class BotMovement : RigidBody
         }
         else
         {
-            return Vector3.Inf;
+            return Vector3.One * 1000;
         }
     }
 
     private bool PinVal(int pin)
     {
         return (JavaScript.Eval($"pinVal({pin})", true) as float?) == 1;
+    }
+
+    private void SetPin(int pin, float value)
+    {
+        JavaScript.Eval($"setPin({pin}, {value})", true);
     }
 }

@@ -5,7 +5,7 @@ using Embot;
 public class Arrow : RigidBody
 {
     [Export] public float Speed;
-    
+
     public override void _Ready()
     {
         this.Connect(Signal.BodyEntered.GetName(), this, nameof(Connected));

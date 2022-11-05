@@ -63,6 +63,19 @@ function set(pin, value) {
   document.getElementById(pin + "out").textContent = value;
 }
 
+function get(pin) {
+  return document.getElementById(pin).textContent;
+}
+
+function setSpeed(speed){
+  let i = 3;
+  while (speed > 0) {
+    set(i, speed % 2 == 1 ? 1 : 0);
+    speed = speed / 2;
+    i++;
+  }
+  for (;i < 11; i++) set(i, 0);
+}
 `.trim();
 
 const outPins: number[] = [
@@ -112,12 +125,30 @@ script.async = true;
 document.body.appendChild(script);
 let script2 = document.createElement("script");
 script2.async = true;
-script2.textContent = "setTimeout(() => {let engine = new Engine({ executable: 'godot', unloadAfterInit: false, canvasResizePolicy: 1 }); engine.startGame();}, 1000); function pinVal(pin){return parseInt(document.getElementById(pin.toString() + 'out').textContent);}function setPin(pin, val){document.getElementById(pin.toString()).textContent = val.toString();}"
+script2.textContent = "setTimeout(() => {let engine = new Engine({ executable: 'godot', unloadAfterInit: false, canvasResizePolicy: 1 }); engine.startGame();}, 1000); function pinVal(pin){return parseInt(document.getElementById(pin.toString() + 'out').textContent);}function setPin(pin, val){document.getElementById(pin.toString()).textContent = val.toString();} function setPinOut(pin, val) {document.getElementById(pin.toString() + 'out').textContent = val.toString();}"
 document.body.appendChild(script2);
 
 
 function App() {
   const [CODE, setCode] = React.useState(CPPCODE);
+  const [running, setRunning] = React.useState(false);
+
+  setInterval(() => {
+    otherState.forEach((pin) => {
+      const val =
+        parseInt(
+          document.getElementById(pin.toString() + "out")?.textContent as string
+        ) === 1
+          ? true
+          : false;
+
+      if (pin === 14 && !val && running) {
+        submit();
+        stopCode();
+      }
+    })
+  }, 100
+  );
 
   window.onload = async function () {
     runButton = document.querySelector("#run-button") as Element;
@@ -191,11 +222,20 @@ function App() {
             ? true
             : false;
         (runner as AVRRunner).portB.setPin(pin - 8, val);
-        if (pin === 13 && val) {
+      });
+      otherState.forEach((pin) => {
+        const val =
+          parseInt(
+            document.getElementById(pin.toString() + "out")?.textContent as string
+          ) === 1
+            ? true
+            : false;
+
+        if (pin === 14 && !val) {
           submit();
           stopCode();
         }
-      });
+      })
     });
   }
 
@@ -225,6 +265,7 @@ function App() {
           SerialLog("Program running.\n\nSerial Output:\n");
           stopButton.removeAttribute("disabled");
           (document.getElementById("14out") as Element).textContent = "1";
+          setRunning(true);
           executeArduino(result.hex);
         } else {
           runButton.removeAttribute("disabled");
@@ -236,6 +277,7 @@ function App() {
     }
     else {
       (document.getElementById("14out") as Element).textContent = "1";
+      setRunning(true);
       executeJs();
       stopButton.removeAttribute("disabled");
     }
@@ -249,7 +291,9 @@ function App() {
   async function stopCode() {
     stopButton.setAttribute("disabled", "1");
     runButton.removeAttribute("disabled");
-      
+
+    setRunning(false);
+
     let sc = document.getElementById("code");
     if (sc == null) {
       if (runner) {

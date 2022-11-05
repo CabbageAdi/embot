@@ -12,6 +12,7 @@
     "@types/react-dom": "^17.0.11",
     "@wokwi/elements": "^0.54.1",
     "avr8js": "^0.18.7",
+    "console-feed": "^3.4.0",
     "lit-html": "^2.0.2",
     "react": "^17.0.2",
     "react-ace": "^9.5.0",
