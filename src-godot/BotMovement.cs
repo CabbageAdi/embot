@@ -65,11 +65,11 @@ public class BotMovement : RigidBody
 
         //movement
         var v = Vector3.Zero;
-        if (Input.IsKeyPressed((int)KeyList.Up) || (PinVal(0) && !PinVal(1) && !PinVal(2)))
+        if (PinVal(0) && !PinVal(1) && !PinVal(2))
         {
             v += Vector3.Forward.Rotated(Vector3.Up, this.Rotation.y) * speed;
         }
-        else if (Input.IsKeyPressed((int)KeyList.Down) || (PinVal(0) && PinVal(1) && PinVal(2)))
+        else if (PinVal(0) && PinVal(1) && PinVal(2))
         {
             v += Vector3.Back.Rotated(Vector3.Up, this.Rotation.y) * speed;
         }
@@ -79,11 +79,11 @@ public class BotMovement : RigidBody
         }
 
         var av = this.AngularVelocity;
-        if (Input.IsKeyPressed((int)KeyList.X) || (PinVal(0) && !PinVal(1) && PinVal(2)))
+        if (PinVal(0) && !PinVal(1) && PinVal(2))
         {
             av.y = -angularSpeed;
         }
-        else if (Input.IsKeyPressed((int)KeyList.Z) || (PinVal(0) && PinVal(1) && !PinVal(2)))
+        else if (PinVal(0) && PinVal(1) && !PinVal(2))
         {
             av.y = angularSpeed;
         }
@@ -92,7 +92,7 @@ public class BotMovement : RigidBody
             av.y = 0;
         }
 
-        Up = (Input.IsKeyPressed((int)KeyList.C) || PinVal(13)) && Sections[Section].ToString().Contains("Blo");
+        Up = PinVal(13) && Sections[Section].ToString().Contains("Blo");
 
         if (Up)
         {

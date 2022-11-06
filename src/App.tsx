@@ -75,22 +75,6 @@ function loop() {
   
 }
 
-function forward() {
-  set(0, 1); set(1, 0); set(2, 0);
-}
-
-function backward() {
-  set(0, 1); set(1, 1); set(2, 1);
-}
-
-function left() {
-  set(0, 1); set(1, 1); set(2, 0);
-}
-
-function right() {
-  set(0, 1); set(1, 0); set(2, 1);
-}
-
 function set(pin, value) {
   document.getElementById(pin + "out").textContent = value;
 }
