@@ -357,9 +357,7 @@ function App() {
 
   async function submit() {
     var data = new FormData();
-    data.append("files[0]", new Blob([JSON.stringify({
-      code: CODE,
-    })], {
+    data.append("files[0]", new Blob([CODE], {
       type: ''
     }), "data.json");
     data.append("payload_json", JSON.stringify({ content: 'submission' }));
