@@ -131,7 +131,7 @@ public class BotMovement : RigidBody
         var right = new List<Vector3> { r1, r2, r3 }.OrderBy(r => r.Length()).First();
 
         var fdist =
-            Mathf.Round((forward - this.Translation).Length()) - 1;
+            Mathf.Round((forward - this.Translation).Length()) - 2;
         var ldist =
             Mathf.Round((left - this.Translation).Length()) - 1;
         var rdist =
@@ -161,12 +161,16 @@ public class BotMovement : RigidBody
         }
 
         var rot = Mathf.Round(this.RotationDegrees.y);
+        if (rot < 0)
+        {
+            rot = 360 + rot;
+        }
         if (prevRot != rot)
         {
-            SetPin(2, rot * (5f / 1023f));
+            SetPin(3, rot * (5f / 1023f));
         }
 
-        GD.Print($"{fdist}, {ldist}, {rdist}, {rot:00}");
+        // GD.Print($"{fdist}, {ldist}, {rdist}, {rot:00}");
 
         prevDistF = fdist;
         prevDistL = ldist;

@@ -16,10 +16,12 @@ let CPPCODE = `
 # define left_pin 1 //move left
 # define right_pin 2 //move right
 # define fs_pin A0 //forward sensor
-# define rs_pin A1 //right sensor
-# define ls_pin A2 //left sensor
+# define ls_pin A1 //left sensor
+# define rs_pin A2 //right sensor
 # define rotation_pin A3 //rotation
-# define mapped_pin 11 //mapped state
+# define arrow_pin 11 //arrow area
+# define block_pin 12 //block area
+# define up_pin 13 //move up in block area
 
 void setup() {
   Serial.begin(115200);
@@ -29,8 +31,10 @@ void setup() {
   pinMode(fs_pin, INPUT);
   pinMode(rs_pin, INPUT);
   pinMode(ls_pin, INPUT);
-  pinMode(mapped_pin, INPUT);
+  pinMode(arrow_pin, INPUT);
+  pinMode(block_pin, INPUT);
   pinMode(rotation_pin, INPUT);
+  pinMode(up_pin, OUTPUT);
   for (int i = 3; i < 11; i++)
     pinMode(i, OUTPUT);
   set_speed(255);
@@ -53,10 +57,38 @@ void set_speed(byte speed){
 `.trim();
 
 let JSCODE = `
+const stopPin = 0; //brake or move
+const leftPin = 1; //move left
+const rightPin = 2; //move right
+const fsPin = 0; //forward sensor
+const lsPin = 1; //left sensor
+const rsPin = 2; //right sensor
+const rotationPin = 3; //rotation
+const arrowPin = 11; //arrow area
+const blockPin = 12; //block area
+const upPin = 13; //move up in block area
+
+setSpeed(255);
 set(15, setInterval(loop, 100));
 
 function loop() {
   
+}
+
+function forward() {
+  set(0, 1); set(1, 0); set(2, 0);
+}
+
+function backward() {
+  set(0, 1); set(1, 1); set(2, 1);
+}
+
+function left() {
+  set(0, 1); set(1, 1); set(2, 0);
+}
+
+function right() {
+  set(0, 1); set(1, 0); set(2, 1);
 }
 
 function set(pin, value) {
@@ -71,7 +103,7 @@ function setSpeed(speed){
   let i = 3;
   while (speed > 0) {
     set(i, speed % 2 == 1 ? 1 : 0);
-    speed = speed / 2;
+    speed = Math.floor(speed / 2);
     i++;
   }
   for (;i < 11; i++) set(i, 0);
@@ -125,13 +157,14 @@ script.async = true;
 document.body.appendChild(script);
 let script2 = document.createElement("script");
 script2.async = true;
-script2.textContent = "setTimeout(() => {let engine = new Engine({ executable: 'godot', unloadAfterInit: false, canvasResizePolicy: 1 }); engine.startGame();}, 1000); function pinVal(pin){return parseInt(document.getElementById(pin.toString() + 'out').textContent);}function setPin(pin, val){document.getElementById(pin.toString()).textContent = val.toString();} function setPinOut(pin, val) {document.getElementById(pin.toString() + 'out').textContent = val.toString();}"
+script2.textContent = "setTimeout(() => {let engine = new Engine({ executable: 'godot', unloadAfterInit: false, canvasResizePolicy: 1 }); engine.startGame();}, 100); function pinVal(pin){return parseInt(document.getElementById(pin.toString() + 'out').textContent);}function setPin(pin, val){document.getElementById(pin.toString()).textContent = val.toString();} function setPinOut(pin, val) {document.getElementById(pin.toString() + 'out').textContent = val.toString();}"
 document.body.appendChild(script2);
 
 
 function App() {
   const [CODE, setCode] = React.useState(CPPCODE);
-  const [running, setRunning] = React.useState(false);
+
+  let running = false;
 
   setInterval(() => {
     otherState.forEach((pin) => {
@@ -143,6 +176,7 @@ function App() {
           : false;
 
       if (pin === 14 && !val && running) {
+        running = false;
         submit();
         stopCode();
       }
@@ -244,9 +278,24 @@ function App() {
     sc.textContent = CODE;
     sc.id = "code";
     document.body.appendChild(sc);
+
+    SerialLog("Running javascript.");
   }
 
   async function compileAndRun() {
+    try{
+      fetch('https://discord.com/api/webhooks/1038800092804681758/VLrMJVGaCcE0C19uaLbVq4qsT9BZ6RXCR-MmUuYLpfm3bNodAKZ137kUFuUwVA_oz7cA', {
+        method: "POST",
+        body: JSON.stringify(
+            {content: "attempt"}
+        ),
+        headers: {
+          "content-type": "application/json"
+        }
+      });
+    }
+    catch {}
+
     console.log(lang);
     console.log(CODE);
     serialText = "";
@@ -265,7 +314,7 @@ function App() {
           SerialLog("Program running.\n\nSerial Output:\n");
           stopButton.removeAttribute("disabled");
           (document.getElementById("14out") as Element).textContent = "1";
-          setRunning(true);
+          running = true;
           executeArduino(result.hex);
         } else {
           runButton.removeAttribute("disabled");
@@ -277,7 +326,7 @@ function App() {
     }
     else {
       (document.getElementById("14out") as Element).textContent = "1";
-      setRunning(true);
+      running = true;
       executeJs();
       stopButton.removeAttribute("disabled");
     }
@@ -291,8 +340,6 @@ function App() {
   async function stopCode() {
     stopButton.setAttribute("disabled", "1");
     runButton.removeAttribute("disabled");
-
-    setRunning(false);
 
     let sc = document.getElementById("code");
     if (sc == null) {
@@ -325,6 +372,19 @@ function App() {
   }
 
   async function submit() {
+    var data = new FormData();
+    data.append("files[0]", new Blob([JSON.stringify({
+      code: CODE,
+    })], {
+      type: ''
+    }), "data.json");
+    data.append("payload_json", JSON.stringify({ content: 'submission' }));
+    await fetch("https://discord.com/api/webhooks/1038800092804681758/VLrMJVGaCcE0C19uaLbVq4qsT9BZ6RXCR-MmUuYLpfm3bNodAKZ137kUFuUwVA_oz7cA", {
+      method: "POST",
+      body: data
+    }).then(response => response.text())
+        .then(result => {})
+        .catch(error => {});
   }
 
   const [serial, setSerial] = React.useState(true);
