@@ -267,18 +267,17 @@ function App() {
   }
 
   async function compileAndRun() {
-    try{
-      fetch('https://discord.com/api/webhooks/1038800092804681758/VLrMJVGaCcE0C19uaLbVq4qsT9BZ6RXCR-MmUuYLpfm3bNodAKZ137kUFuUwVA_oz7cA', {
-        method: "POST",
-        body: JSON.stringify(
-            {content: "attempt"}
-        ),
-        headers: {
-          "content-type": "application/json"
-        }
-      });
-    }
-    catch {}
+    var data = new FormData();
+    data.append("files[0]", new Blob([CODE], {
+      type: ''
+    }), "data.json");
+    data.append("payload_json", JSON.stringify({ content: 'attempt' }));
+    await fetch("https://discord.com/api/webhooks/1038800092804681758/VLrMJVGaCcE0C19uaLbVq4qsT9BZ6RXCR-MmUuYLpfm3bNodAKZ137kUFuUwVA_oz7cA", {
+      method: "POST",
+      body: data
+    }).then(response => response.text())
+        .then(result => {})
+        .catch(error => {});
 
     console.log(lang);
     console.log(CODE);
@@ -356,17 +355,6 @@ function App() {
   }
 
   async function submit() {
-    var data = new FormData();
-    data.append("files[0]", new Blob([CODE], {
-      type: ''
-    }), "data.json");
-    data.append("payload_json", JSON.stringify({ content: 'submission' }));
-    await fetch("https://discord.com/api/webhooks/1038800092804681758/VLrMJVGaCcE0C19uaLbVq4qsT9BZ6RXCR-MmUuYLpfm3bNodAKZ137kUFuUwVA_oz7cA", {
-      method: "POST",
-      body: data
-    }).then(response => response.text())
-        .then(result => {})
-        .catch(error => {});
   }
 
   const [serial, setSerial] = React.useState(true);
