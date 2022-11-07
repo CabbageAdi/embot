@@ -145,30 +145,18 @@ public class BotMovement : RigidBody
         if (left == Vector3.One * 1000 || ldist > 5) ldist = 5;
         if (right == Vector3.One * 1000 || rdist > 5) rdist = 5;
 
-        if (fdist != prevDistF)
-        {
-            SetPin(0, fdist);
-        }
+        SetPin(0, fdist);
 
-        if (ldist != prevDistL)
-        {
-            SetPin(1, ldist);
-        }
+        SetPin(1, ldist);
 
-        if (rdist != prevDistR)
-        {
-            SetPin(2, rdist);
-        }
+        SetPin(2, rdist);
 
         var rot = Mathf.Round(this.RotationDegrees.y);
         if (rot < 0)
         {
             rot = 360 + rot;
         }
-        if (prevRot != rot)
-        {
-            SetPin(3, rot * (5f / 1023f));
-        }
+        SetPin(3, rot * (5f / 1023f));
 
         // GD.Print($"{fdist}, {ldist}, {rdist}, {rot:00}");
 
