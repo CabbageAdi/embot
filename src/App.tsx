@@ -134,17 +134,6 @@ let compilerOutputText: Element;
 
 let serialText: string;
 
-//godot scripts
-let script = document.createElement("script");
-script.src = document.documentURI + "godot.js";
-script.async = true;
-document.body.appendChild(script);
-let script2 = document.createElement("script");
-script2.async = true;
-script2.textContent = "setTimeout(() => {let engine = new Engine({ executable: 'godot', unloadAfterInit: false, canvasResizePolicy: 1 }); engine.startGame();}, 300); function pinVal(pin){return parseInt(document.getElementById(pin.toString() + 'out').textContent);}function setPin(pin, val){document.getElementById(pin.toString()).textContent = val.toString();} function setPinOut(pin, val) {document.getElementById(pin.toString() + 'out').textContent = val.toString();}"
-document.body.appendChild(script2);
-
-
 function App() {
   const [CODE, setCode] = React.useState(CPPCODE);
 
