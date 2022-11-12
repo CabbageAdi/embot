@@ -46,7 +46,7 @@ font_data = ExtResource( 5 )
 [node name="Spatial" type="Spatial"]
 
 [node name="robot" parent="." instance=ExtResource( 3 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 153.435, 0.600015, -305.589 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0 )
 contacts_reported = 100
 contact_monitor = true
 script = ExtResource( 1 )
@@ -55,8 +55,8 @@ AngularSpeed = 2.0
 Sections = [ NodePath("../Sections/Ground"), NodePath("../Sections/Arr"), NodePath("../Sections/Blo"), NodePath("../Sections/Arr2"), NodePath("../Sections/Blo2"), NodePath("../Sections/Arr3"), NodePath("../Sections/Ground2"), NodePath("../Sections/End") ]
 SectionTimePath = NodePath("../UI/Label")
 StartPos = Vector3( 0, 0.6, 0 )
-SectionStartRotations = PoolRealArray( 0, -90, 0, 0, 0, 0, 0, 0 )
-SectionStartPoints = PoolVector2Array( 0, 0, 54, -90, 120, -166, 160, -225, 114, -164, 152, -224, 156, -305, 0, 0, 0, 0 )
+SectionStartRotations = PoolRealArray( 0, -90, 0, 0, 0, -90, -90, 0 )
+SectionStartPoints = PoolVector2Array( 0, 0, 54, -90, 120, -166, 160, -225, 154, -305, 252, -345, 353, -345, 495, -455 )
 
 [node name="Camera" type="Camera" parent="."]
 transform = Transform( 1, 0, 0, 0, 0.708019, 0.706193, 0, -0.706193, 0.708019, 0, 24.7766, 6.04476 )
@@ -81,7 +81,6 @@ transform = Transform( 80, 0, 0, 0, 1, 0, 0, 0, 74, 429, 0, -377 )
 shape = SubResource( 3 )
 
 [node name="MeshInstance" type="MeshInstance" parent="Sections/Ground2"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 mesh = SubResource( 4 )
 
 [node name="Arr" type="StaticBody" parent="Sections"]
@@ -368,7 +367,6 @@ transform = Transform( 1, 0, 0, 0, 10, 0, 0, 0, 10, 480, 10, -359 )
 shape = SubResource( 5 )
 
 [node name="MeshInstance" type="MeshInstance" parent="Walls/Wall42"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 mesh = SubResource( 6 )
 
 [node name="Wall45" type="StaticBody" parent="Walls"]
@@ -701,7 +699,7 @@ Delay = 3000.0
 ArrowScene = ExtResource( 4 )
 
 [node name="ArrowGen12" type="MeshInstance" parent="Arrows"]
-transform = Transform( -1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 288.161, 1.00001, -361.523 )
+transform = Transform( 1, 0, 5.96046e-08, 0, 1, 0, -5.96046e-08, 0, 1, 288.161, 1.00001, -324.825 )
 mesh = ExtResource( 7 )
 skeleton = NodePath("../..")
 material/0 = SubResource( 11 )
@@ -721,7 +719,7 @@ Delay = 3000.0
 ArrowScene = ExtResource( 4 )
 
 [node name="ArrowGen14" type="MeshInstance" parent="Arrows"]
-transform = Transform( -1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 334.161, 1.00001, -361.523 )
+transform = Transform( 1, 0, 1.19209e-07, 0, 1, 0, -1.19209e-07, 0, 1, 334.161, 1.00001, -324.523 )
 mesh = ExtResource( 7 )
 skeleton = NodePath("../..")
 material/0 = SubResource( 11 )
@@ -781,7 +779,7 @@ Delay = 3000.0
 ArrowScene = ExtResource( 4 )
 
 [node name="ArrowGen10" type="MeshInstance" parent="Arrows"]
-transform = Transform( 1.94707e-07, 0, 1, 0, 1, 0, -1, 0, 1.94707e-07, 185.504, 1, -265.68 )
+transform = Transform( -1.07284e-07, 0, -1, 0, 1, 0, 1, 0, -1.07284e-07, 148.504, 1, -265.68 )
 mesh = ExtResource( 7 )
 skeleton = NodePath("../..")
 material/0 = SubResource( 11 )
